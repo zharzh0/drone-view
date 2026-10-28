@@ -1,0 +1,25 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: drone-view-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: drone_view
+      MYSQL_USER: drone
+      MYSQL_PASSWORD: dronepass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  adminer:
+    image: adminer:latest
+    container_name: drone-view-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:
