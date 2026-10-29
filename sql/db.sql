@@ -7,12 +7,10 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,N
 -- -----------------------------------------------------
 -- Schema drone
 -- -----------------------------------------------------
-
--- -----------------------------------------------------
--- Schema drone
--- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `drone` DEFAULT CHARACTER SET utf8 ;
-USE `drone` ;
+CREATE SCHEMA IF NOT EXISTS `drone`
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE `drone`;
 
 -- -----------------------------------------------------
 -- Table `drone`.`drone`
@@ -23,9 +21,8 @@ CREATE TABLE IF NOT EXISTS `drone`.`drone` (
   `brand` VARCHAR(45) NOT NULL,
   `model` VARCHAR(45) NOT NULL,
   `additional_info` VARCHAR(255) NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB;
-
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `drone`.`user`
@@ -35,18 +32,18 @@ CREATE TABLE IF NOT EXISTS `drone`.`user` (
   `fname` VARCHAR(45) NOT NULL,
   `lname` VARCHAR(45) NOT NULL,
   `username` VARCHAR(45) NOT NULL,
-  `password` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB;
-
+  `password_hash` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_user_username` (`username` ASC) VISIBLE
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `drone`.`usage_event`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `drone`.`usage_event` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `start_time` DATE NULL,
-  `end_time` DATE NULL,
+  `start_time` DATETIME NOT NULL,
+  `end_time` DATETIME NULL,
   `user_id` INT NOT NULL,
   `drone_id` INT NOT NULL,
   PRIMARY KEY (`id`),
@@ -61,18 +58,21 @@ CREATE TABLE IF NOT EXISTS `drone`.`usage_event` (
     FOREIGN KEY (`drone_id`)
     REFERENCES `drone`.`drone` (`id`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
+    ON UPDATE NO ACTION,
+  CONSTRAINT `chk_usage_times`
+    CHECK (`end_time` IS NULL OR `end_time` > `start_time`)
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `drone`.`images`
+-- Images are linked to the usage event, user and drone.
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `drone`.`images` (
   `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
   `latitude` DECIMAL(8,6) NOT NULL,
   `longitude` DECIMAL(9,6) NOT NULL,
-  `altitude` DECIMAL(8,2) NOT NULL,
+  `altitude` DECIMAL(8,2) NULL,
   `timestamp` TIMESTAMP NOT NULL,
   `usage_event_id` INT NOT NULL,
   `user_id` INT NOT NULL,
@@ -96,9 +96,8 @@ CREATE TABLE IF NOT EXISTS `drone`.`images` (
     FOREIGN KEY (`drone_id`)
     REFERENCES `drone`.`drone` (`id`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
